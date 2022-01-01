@@ -1,0 +1,694 @@
+package on nodemon:
+- nodemon 
+- eslint
+- hapi (fw)
+- nanoid
+
+Langkah-langkah pengerjaan proyek:
+1. Buat folder baru bernama "notes-app-back-end"
+-> buka terminal
+$cd c:\desktop\
+$mkdir notes-app-back-end
+$cd notes-app-back-end
+
+2. Buat file baru server.js
+code: console.log('Hallo kita akan membuat RESTful API');
+
+3. Install nodemon
+
+4. Cek file package.json
+code (old):
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+code (new): 
+"scripts": {
+    "start": "nodemon server.js"
+ },
+
+ 5. Test program server.js dengan menjalankan perintah di cmd "npm run start"
+
+ 6. (optional) Install eslint
+
+ 7. Frontend part yang sudah disediakan oleh dicoding http://notesapp-v1.dicodingacademy.com/
+
+---------
+Saat Anda mengaksesnya, aplikasi tersebut belum bisa digunakan. 
+Anda tidak bisa melihat dan menambahkan catatan apa pun. 
+Namun, percayalah! Aplikasi tersebut akan berfungsi dengan baik tatkala Anda sudah membuat RESTful API sesuai dengan kriteria yang dibutuhkan.
+---------
+Fitur ke-1 -> Web Server Dapat Menyimpan Catatan
+#1  
+ Berikut struktur dari objek catatan yang perlu disimpan oleh server:
+ {
+ id: 'notes-V1StGXR8_Z5jdHi6B-myT',
+ title: 'Sejarah JavaScript',
+ createdAt: '2020-12-23T23:00:09.686Z',
+ updatedAt: '2020-12-23T23:00:09.686Z',
+ tags: ['NodeJS', 'JavaScript'],
+ body: 'JavaScript pertama kali dikembangkan oleh Brendan Eich dari Netscape di bawah nama Mocha, yang nantinya namanya diganti menjadi LiveScript, dan akhirnya menjadi JavaScript. Navigator sebelumnya telah mendukung Java untuk lebih bisa dimanfaatkan para pemrogram yang non-Java.',
+},
+Agar web server dapat menyimpan catatan melalui aplikasi client, web server harus menyediakan route dengan path ‘/notes’ dan method POST. 
+
+#2
+Dalam menyimpan atau menambahkan notes, client akan mengirimkan permintaan ke path dan method tersebut dengan membawa data JSON berikut pada request body:
+{
+ "title": "Judul Catatan",
+ "tags": ["Tag 1", "Tag 2"],
+ "body": "Konten catatan"
+}
+Untuk properti id, createdAt, dan updatedAt harus diolah di sisi server, jadi client tidak akan mengirimkan itu. Server harus memastikan properti id selalu unik.
+
+#3
+Jika permintaan client berhasil dilakukan, respons dari server harus memiliki status code 201 (created) dan mengembalikan data dalam bentuk JSON dengan format berikut:
+{
+  "status": "success",
+  "message": "Catatan berhasil ditambahkan",
+  "data": {
+    "noteId": "V09YExygSUYogwWJ"
+  }
+}
+Nilai dari properti noteId diambil dari properti id yang dibuat secara unik. 
+
+#4 
+Bila permintaan gagal dilakukan, berikan status code 500 dan kembalikan dengan data JSON dengan format berikut:
+{
+  "status": "error",
+  "message": "Catatan gagal untuk ditambahkan"
+}
+********************
+Fitur ke-2: Web Server Dapat Menampilkan Catatan
+#1
+Ketika client melakukan permintaan pada path ‘/notes’ dengan method ‘GET’, server harus mengembalikan status code 200 (ok) serta seluruh data notes dalam bentuk array menggunakan JSON. Contohnya seperti ini:
+{
+  "status": "success",
+  "data": {
+    "notes": [
+      {
+        "id":"notes-V1StGXR8_Z5jdHi6B-myT",
+        "title":"Catatan 1",
+        "createdAt":"2020-12-23T23:00:09.686Z",
+        "updatedAt":"2020-12-23T23:00:09.686Z",
+        "tags":[
+          "Tag 1",
+          "Tag 2"
+        ],
+        "body":"Isi dari catatan 1"
+      },
+      {
+        "id":"notes-V1StGXR8_98apmLk3mm1",
+        "title":"Catatan 2",
+        "createdAt":"2020-12-23T23:00:09.686Z",
+        "updatedAt":"2020-12-23T23:00:09.686Z",
+        "tags":[
+          "Tag 1",
+          "Tag 2"
+        ],
+        "body":"Isi dari catatan 2"
+      }
+    ]
+  }
+}
+Jika belum ada catatan satu pun pada array, server bisa mengembalikan data notes dengan nilai array kosong seperti ini:
+{
+  "status": "success",
+  "data": {
+    "notes": []
+  }
+}
+
+#2
+Selain itu, client juga bisa melakukan permintaan untuk mendapatkan catatan secara spesifik menggunakan id melalui path ‘/notes/{id}’ dengan method ‘GET’. Server harus mengembalikan status code 200 (ok) serta nilai satu objek catatan dalam bentuk JSON seperti berikut:
+{
+  "status": "success",
+  "data": {
+    "note": {
+      "id":"notes-V1StGXR8_Z5jdHi6B-myT",
+      "title":"Catatan 1",
+      "createdAt":"2020-12-23T23:00:09.686Z",
+      "updatedAt":"2020-12-23T23:00:09.686Z",
+      "tags":[
+        "Tag 1",
+        "Tag 2"
+      ],
+      "body":"Isi dari catatan 1"
+    }
+  }
+}
+Bila client melampirkan id catatan yang tidak ditemukan, server harus merespons dengan status code 404 dan data dalam bentuk JSON seperti ini:
+{
+  "status": "fail",
+  "message": "Catatan tidak ditemukan"
+}
+********************
+Fitur 3: Web Server Dapat Mengubah Catatan
+ #1
+ Ketika client meminta perubahan catatan, ia akan membuat permintaan ke path ‘/notes/{id}’, menggunakan method ‘PUT’, serta membawa data JSON pada body request yang merupakan data catatan terbaru.
+{
+  "title":"Judul Catatan Revisi",
+  "tags":[
+    "Tag 1",
+    "Tag 2"
+  ],
+  "body":"Konten catatan"
+}
+
+ #2
+Jika perubahan data berhasil dilakukan, server harus menanggapi dengan status code 200 (ok) dan membawa data JSON objek berikut pada body respons.
+{
+  "status": "success",
+  "message": "Catatan berhasil diperbaharui"
+}
+
+ #3
+Perubahan data catatan harus disimpan ke catatan yang sesuai dengan id yang digunakan pada path parameter. Bila id catatan tidak ditemukan, server harus merespons dengan status code 404 (not found) dan data JSON seperti ini:
+{
+  "status": "fail",
+  "message": "Gagal memperbarui catatan. Id catatan tidak ditemukan"
+}
+********************
+Fitur 4: Web Server Dapat Menghapus Catatan
+#1
+Untuk menghapus catatan, client akan membuat permintaan pada path ‘/notes/{id}’ dengan method ‘DELETE’. Ketika permintaan tersebut berhasil, server harus mengembalikan status code 200 (ok) serta data JSON berikut:
+{
+  "status": "success",
+  "message": "Catatan berhasil dihapus"
+}
+Catatan yang dihapus harus sesuai dengan id catatan yang digunakan client pada path parameter. Bila id catatan tidak ditemukan, server harus mengembalikan respons dengan status code 404 dan membawa data JSON berikut:
+{
+  "status": "fail",
+  "message": "Catatan gagal dihapus. Id catatan tidak ditemukan"
+}
+********************
+Struktur Proyek = Kami memegang prinsip single responsibility approach. Artinya, kita gunakan satu berkas JavaScript untuk satu tujuan saja.
+Nah, di proyek kali ini kita akan membuat setidaknya 4 buah berkas JavaScript:
++ server.js: Memuat kode untuk membuat, mengonfigurasi, dan menjalankan HTTP server menggunakan Hapi.
++ routes.js: Memuat kode konfigurasi routing server, seperti menentukan path, method, dan handler yang digunakan.
++ handler.js: Memuat seluruh fungsi-fungsi handler yang digunakan pada berkas routes.
++ notes.js: Memuat data notes yang disimpan dalam bentuk array objek.
+********************
+Jadi, secara keseluruhan struktur proyek akan tampak seperti ini:
+notes-app-back-end
+├── node_modules
+├── src
+│ ├── handler.js
+│ ├── notes.js
+│ ├── routes.js
+│ └── server.js
+├── .eslintrc.json
+├── package-lock.json
+└── package.json
+---------
+
+8. Buat folder src, kemudian isi floder tsb dgn bbrp file (1)handler.js, (2)notes.js, (3)routes.js, (4) file lama = server.js
+9. Install fw js hapi
+10. Tulis kode ini di file server.js
+code:
+const Hapi = require('@hapi/hapi');
+ 
+ 
+const init = async () => {
+  const server = Hapi.server({
+    port: 5000,
+    host: 'localhost',
+  });
+ 
+ 
+  await server.start();
+  console.log(`Server berjalan pada ${server.info.uri}`);
+};
+ 
+ 
+init();
+
+11. Masuk ke sisi frontend yng dibuat oleh dicoding, kemudian pilih "change URL"
+12. Isi dengan host beserta port dari web server yang anda buat
+ex: http://localhost:5000/
+13. Membuat fitur ke-1: Menyimpan Catatan
+--------Start--------
+-> Menyediakan route dengan path ‘/notes’ dan method ‘POST’ pada file route.js
+code: 
+const routes = [
+  {
+    method: 'POST',
+    path: '/notes',
+    handler: () => {},
+  },
+];
+module.exports = routes; #untuk menyediakan umpan untuk dipanggil oleh file server.js
+
+-> buat array untuk menampung objek catatan pada berkas notes.js
+code:
+const notes = [];
+module.exports = notes; #untuk menyediakan umpan untuk dipanggil oleh file server.js
+
+-> buat fungsi handler untuk route ini  /notes
+const addNoteHandler = (request, h) => { // 2 parameter di dlm kurung hrs selalu ada
+ 
+};
+
+-> Untuk mengekspor fungsi handler, digunakan objek literals untuk memudahkan ekspor lebih dari satu nilai pada satu berkas JavaScript
+code: 
+const addNoteHandler = (request, h) => {
+ 
+};
+ 
+module.exports = { addNoteHandler };
+
+-> tuliskan logika untuk menyimpan catatan dari client ke dalam array notes.
+penjelasan dlm bahasa indo: Client mengirim data catatan (title, tags, dan body) yang akan disimpan dalam bentuk JSON melalui body request. Anda masih ingat 'kan cara mendapatkan body request di Hapi? Ya, menggunakan properti request.payload.
+code: 
+const addNoteHandler = (request, h) => { // !! proses kode untuk menyimpan catatan dari client ke dalam array notes !!
+    const { title, tags, body } = request.payload;
+};
+reminder: Kita hanya mendapatkan nilai title, tags, dan body dari client. Itu berarti, sisanya kita perlu olah sendiri.
+
+-> Install nanoid
+
+-> Kita akan menggunakan bantuan library pihak ketiga untuk menghasilkan properti id merupakan string dan harus unik
+code:
+const { nanoid } = require('nanoid');
+const addNoteHandler = (request, h) => {
+  const { title, tags, body } = request.payload;
+ 
+  const id = nanoid(16);
+};
+
+-> buat properti createdAt dan updatedAt nilai kedua properti tersebut seharusnya sama sehingga kita bisa secara mudah memberikan nilai new Date().toISOString().
+code:
+const addNoteHandler = (request, h) => { 
+    const { title, tags, body } = request.payload;
+
+    const id = nanoid(16);
+    const createdAt = new Date().toISOString();
+    const updatedAt = createdAt;
+};
+
+-> saatnya kita masukan nilai-nilai tersebut ke dalam array notes menggunakan method push()
+code: 
+const addNoteHandler = (request, h) => {
+  const { title, tags, body } = request.payload;
+ 
+  const id = nanoid(16);
+  const createdAt = new Date().toISOString();
+  const updatedAt = createdAt;
+ 
+  const newNote = {
+    title, tags, body, id, createdAt, updatedAt,
+  };
+  notes.push(newNote);
+};
+
+-> impor array notes pada berkas handler.js.
+code: 
+const { nanoid } = require('nanoid');
+const notes = require('./notes');
+ 
+const addNoteHandler = (request, h) => {
+ const { title, tags, body } = request.payload;
+ 
+ const id = nanoid(16);
+ const createdAt = new Date().toISOString();
+ const updatedAt = createdAt;
+ 
+ const newNote = {
+   title, tags, body, id, createdAt, updatedAt,
+ };
+ 
+ notes.push(newNote);
+};
+
+-> bagaimana menentukan apakah newNote sudah masuk ke dalam array notes? 
+   manfaatkan method filter() berdasarkan id catatan untuk mengetahuinya.
+code: 
+const addNoteHandler = (request, h) => {
+  const { title, tags, body } = request.payload;
+ 
+  const id = nanoid(16);
+  const createdAt = new Date().toISOString();
+  const updatedAt = createdAt;
+ 
+  const newNote = {
+    title, tags, body, id, createdAt, updatedAt,
+  };
+ 
+  notes.push(newNote);
+ 
+  const isSuccess = notes.filter((note) => note.id === id).length > 0;
+};
+
+-> gunakan isSuccess untuk menentukan respons yang diberikan server. Jika isSuccess bernilai true, silakan beri respons berhasil. Jika false, silakan beri respons gagal.
+code: 
+    const { title, tags, body } = request.payload;
+
+    const id = nanoid(16);
+    const createdAt = new Date().toISOString();
+    const updatedAt = createdAt;
+
+    const newNote = {
+        title, tags, body, id, createdAt, updatedAt,
+    };
+    notes.push(newNote);
+    const isSuccess = notes.filter((note) => note.id === id).length > 0;
+
+    if (isSuccess) {
+        const response = h.response({
+          status: 'success',
+          message: 'Catatan berhasil ditambahkan',
+          data: {
+            noteId: id,
+          },
+        });
+        response.code(201);
+        return response;
+      }
+      
+      const response = h.response({
+        status: 'fail',
+        message: 'Catatan gagal ditambahkan',
+      });
+      response.code(500);
+      return response;
+--------End--------
+14. gunakan fungsi handler ini pada konfigurasi route pada file routes.js
+code: 
+{
+  method: 'POST',
+  path: '/notes',
+  handler: addNoteHandler,
+},
+
+15.  import fungsi addNoteHandler pada berkas routes.js.
+code: const { addNoteHandler } = require('./handler');
+
+---
+- problem: Ketika server menampung website, mungkin beberapa data gambar, video, stylesheet biasanya diambil dari alamat server lain atau origin yang berbeda.
+Apakah Anda tahu bahwa tidak semua data bisa diambil dari origin yang berbeda?
+--> frontend dan backend tidak dapat berkomunikasi satu dengan yng lain -nya <--
+- kondisi saat ini: Jika website meminta sesuatu menggunakan teknik tersebut dari luar origin-nya, permintaan tersebut akan ditolak. Itu disebabkan oleh kebijakan same-origin.
+Origin terdiri dari tiga hal: protokol, host, dan port number.
+--> http://notesapp-v1.dicodingacademy.com <--
+Di mana protokolnya adalah http://, host-nya adalah notesapp-v1.dicodingacademy.com, dan port-nya adalah :80 (implisit).
+Sementara origin web servernya adalah http://localhost:5000/. 
+--> Keduanya memiliki origin yang berbeda. <--
+- solusi: Mekanisme tersebut disebut Cross-Origin Resource Sharing (CORS).
+---
+
+16. Implementasi CORS dengan native node.js 
+code: 
+const response = h.response({ error: false, message: 'Catatan berhasil ditambahkan' });
+response.header('Access-Control-Allow-Origin', '*');
+return response;
+    Implementasi CORS dengan fw hapi.js pada file routes.js
+code:
+{
+  method: 'POST',
+  path: '/notes',
+  handler: addNoteHandler,
+  options: {
+    cors: {
+      origin: ['*'],
+    },
+  },
+},
+    Bila ingin cakupannya lebih luas alias CORS diaktifkan di seluruh route yang ada di server, Anda bisa tetapkan CORS pada konfigurasi ketika hendak membuat server dengan menambahkan properti routes.cors. (file = server.js)
+code: 
+const server = Hapi.server({
+  port: 5000,
+  host: 'localhost',
+  routes: {
+    cors: {
+      origin: ['*'],
+    },
+  },
+});
+
+17. Membuat fitur ke-2: Menyimpan Catatan
+- buat konfigurasi route terlebih dahulu pada berkas routes.js. 
+  Tetapkan path dengan nilai ‘/notes’ dan method dengan nilai ‘GET’.
+code: 
+const routes = [
+  {
+    method: 'POST',
+    path: '/notes',
+    handler: addNoteHandler,
+  },
+  {
+    method: 'GET',
+    path: '/notes',
+    handler: () => {},
+  },
+];
+
+- buat fungsi handler pada berkas handler.js. Buat fungsi dengan nama getAllNotesHandler dan kembalikan data dengan nilai notes di dalamnya.
+code:
+const getAllNotesHandler = () => ({
+  status: 'success',
+  data: {
+    notes,
+  },
+});
+
+- jangan lupa untuk ekspor nilai getAllNotesHandler agar dapat digunakan di routes.js.
+code:
+const getAllNotesHandler = () => ({
+  status: 'success',
+  data: {
+    notes,
+  },
+});
+ 
+module.exports = { addNoteHandler, getAllNotesHandler };
+
+- Kembali ke berkas routes.js. Gunakan fungsi handler tersebut pada konfigurasi route.
+code:
+const { addNoteHandler, getAllNotesHandler } = require('./handler');
+
+ {
+    method: 'GET',
+    path: '/notes',
+    handler: getAllNotesHandler,
+ },
+
+- tambahkan route dengan path ‘/notes/{id}’ dan method ‘GET’ pada file routes.js
+code:
+const routes = [
+  {
+    method: 'POST',
+    path: '/notes',
+    handler: addNoteHandler,
+  },
+  {
+    method: 'GET',
+    path: '/notes',
+    handler: getAllNotesHandler,
+  },
+  {
+    method: 'GET',
+    path: '/notes/{id}',
+    handler: () => {},
+  },
+];
+
+- buat fungsi dengan nama getNoteByIdHandler pada file handler.js
+tujuan: fungsi ini kita harus mengembalikan objek catatan secara spesifik berdasarkan id yang digunakan oleh path parameter.
+code:
+const getNoteByIdHandler = (request, h) => {
+  const { id } = request.params;
+};
+
+- Setelah mendapatkan nilai id, dapatkan objek note dengan id tersebut dari objek array notes. Manfaatkan method array filter() untuk mendapatkan objeknya.
+code:
+const getNoteByIdHandler = (request, h) => {
+  const { id } = request.params;
+ 
+  const note = notes.filter((n) => n.id === id)[0];
+};
+
+- Kita kembalikan fungsi handler dengan data beserta objek note di dalamnya. Namun, sebelum itu, pastikan dulu objek note tidak bernilai undefined. Bila undefined, kembalikan dengan respons gagal.
+code: 
+const getNoteByIdHandler = (request, h) => {
+  const { id } = request.params;
+ 
+  const note = notes.filter((n) => n.id === id)[0];
+ 
+ if (note !== undefined) {
+    return {
+      status: 'success',
+      data: {
+        note,
+      },
+    };
+  }
+  const response = h.response({
+    status: 'fail',
+    message: 'Catatan tidak ditemukan',
+  });
+  response.code(404);
+  return response;
+};
+
+- Jangan lupa ekspor fungsinya ya.
+
+18. Membuat fitur ke-3: Mengubah catatan
+--> Ketika melakukan perubahan, client akan mengirimkan permintaan ke route ‘/notes/{id}’ dengan method ‘PUT’ dan membawa objek catatan terbaru pada body request. 
+
+- buat route dengan path ‘/notes/{id}’, method ‘PUT’,  dan handler dengan nilai fungsi kosong.
+code:
+{
+  method: 'PUT',
+  path: '/notes/{id}',
+  handler: () => {},
+},
+
+- Catatan yang diubah akan diterapkan sesuai dengan id yang digunakan pada route parameter. 
+  Jadi, kita perlu mendapatkan nilai id-nya terlebih dahulu.
+  Setelah itu, kita dapatkan data notes terbaru yang dikirimkan oleh client melalui body request.
+code: 
+const editNoteByIdHandler = (request, h) => {
+  const { id } = request.params;
+ 
+  const { title, tags, body } = request.payload;
+};
+
+-  dapatkan nilai terbaru dengan menggunakan new Date().toISOString(). 
+code: 
+const editNoteByIdHandler = (request, h) => {
+ const { id } = request.params;
+ 
+ const { title, tags, body } = request.payload;
+ const updatedAt = new Date().toISOString();
+};
+
+- dapatkan dulu index array pada objek catatan sesuai id yang ditentukan. Untuk melakukannya, gunakanlah method array findIndex().
+code: 
+const editNoteByIdHandler = (request, h) => {
+  const { id } = request.params;
+ 
+  const { title, tags, body } = request.payload;
+  const updatedAt = new Date().toISOString();
+ 
+  const index = notes.findIndex((note) => note.id === id);
+};
+
+- Bila note dengan id yang dicari ditemukan, index akan bernilai array index dari objek catatan yang dicari. Namun, bila tidak ditemukan, index akan bernilai -1. 
+  Jadi, kita bisa menentukan gagal atau tidaknya permintaan dari nilai index menggunakan if else.
+code:
+const editNoteByIdHandler = (request, h) => {
+  const { id } = request.params;
+ 
+  const { title, tags, body } = request.payload;
+  const updatedAt = new Date().toISOString();
+ 
+  const index = notes.findIndex((note) => note.id === id);
+ 
+  if (index !== -1) {
+    notes[index] = {
+      ...notes[index],
+      title,
+      tags,
+      body,
+      updatedAt,
+    };
+    const response = h.response({
+      status: 'success',
+      message: 'Catatan berhasil diperbarui',
+    });
+    response.code(200);
+    return response;
+  }
+  const response = h.response({
+    status: 'fail',
+    message: 'Gagal memperbarui catatan. Id tidak ditemukan',
+  });
+  response.code(404);
+  return response;
+};
+
+- Sekarang kita gunakan fungsinya pada route 
+code:
+{
+  method: 'PUT',
+  path: '/notes/{id}',
+  handler: editNoteByIdHandler,
+},
+
+19. Membuat fitur ke-3: Menghapus catatan
+- Tambahkan konfigurasi route dengan nilai path ‘/notes/{id}’, method ‘DELETE’
+code:
+{
+  method: 'DELETE',
+  path: '/notes/{id}',
+  handler: () => {},
+},
+
+- buat fungsi handler baru dengan nama deleteNoteByIdHandler pada handler.js. 
+code:
+const deleteNoteByIdHandler = (request, h) => {
+ 
+};
+
+- dapatkan dulu nilai id yang dikirim melalui path parameter.
+code:
+const deleteNoteByIdHandler = (request, h) => {
+  const { id } = request.params;
+};
+
+- dapatkan index dari objek catatan sesuai dengan id yang didapat.
+code:
+const deleteNoteByIdHandler = (request, h) => {
+  const { id } = request.params;
+ 
+  const index = notes.findIndex((note) => note.id === id);
+};
+
+- untuk menghapus data pada array berdasarkan index, gunakan method array splice().
+Lakukan pengecekan terhadap nilai index, pastikan nilainya tidak -1 bila hendak menghapus catatan.
+code: 
+const deleteNoteByIdHandler = (request, h) => {
+  const { id } = request.params;
+ 
+  const index = notes.findIndex((note) => note.id === id);
+ 
+  if (index !== -1) {
+    notes.splice(index, 1);
+    const response = h.response({
+      status: 'success',
+      message: 'Catatan berhasil dihapus',
+    });
+    response.code(200);
+    return response;
+  }
+};
+
+- Bila index bernilai -1, kembalikan handler dengan respons gagal.
+code:
+const deleteNoteByIdHandler = (request, h) => {
+  const { id } = request.params;
+ 
+  const index = notes.findIndex((note) => note.id === id);
+ 
+  if (index !== -1) {
+    notes.splice(index, 1);
+    const response = h.response({
+      status: 'success',
+      message: 'Catatan berhasil dihapus',
+    });
+    response.code(200);
+    return response;
+  }
+ 
+ const response = h.response({
+    status: 'fail',
+    message: 'Catatan gagal dihapus. Id tidak ditemukan',
+  });
+  response.code(404);
+  return response;
+};
+module.exports = {
+  addNoteHandler,
+  getAllNotesHandler,
+  getNoteByIdHandler,
+  editNoteByIdHandler,
+  deleteNoteByIdHandler,
+};
