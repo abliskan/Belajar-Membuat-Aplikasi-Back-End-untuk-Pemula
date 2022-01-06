@@ -1,0 +1,12 @@
+{
+  "name": "Notes-app-back-end-Dicoding-GCP",
+  "version": "1.0.0",
+  "description": "",
+  "main": "Membangung web service menggunakan node.js",
+  "scripts": {
+    "start":"node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
